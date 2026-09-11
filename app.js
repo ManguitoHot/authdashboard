@@ -1162,14 +1162,6 @@ function renderToolSignalsList(tool) {
               ✔ Señal Principal
             </span>
           `}
-
-          <button class="btn btn-sunset-primary" style="padding: 0.38rem 0.8rem; font-size: 0.75rem;" onclick="sendSignalClick('${tool.id}', '${s.id}')" title="Simular click en este botón">
-            +1 Click
-          </button>
-
-          <button class="btn btn-glass" style="padding: 0.38rem 0.65rem; font-size: 0.75rem; color: #f87171;" onclick="deleteSignal('${tool.id}', '${s.id}')" title="Eliminar esta señal">
-            🗑️
-          </button>
         </div>
       </div>
     `;
