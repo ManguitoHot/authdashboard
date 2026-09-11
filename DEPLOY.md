@@ -74,8 +74,7 @@ lo único que tenés que hacer es que el nombre matchee:
 1. Abrí el dashboard ya desplegado, creá el proyecto si no existe.
 2. **+ Vincular Herramienta** → nombre **exactamente** "Wizard Curvas
    Starcom" (así el id que arma el dashboard es `wizard_curvas_starcom`,
-   igual al que ya está en el Wizard). Nombre de señal inicial: "Botón
-   descargar excel".
+   igual al que ya está en el Wizard). La herramienta se vincula limpia, sin señales por default.
 3. Guardá. No hace falta copiar ningún id — ya coincide solo.
 4. Si el día de mañana vinculás **otra** herramienta (otro Wizard, otra
    calculadora, etc.), dale un nombre distinto, y en esa herramienta

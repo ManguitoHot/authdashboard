@@ -29,7 +29,42 @@ class Store {
       return JSON.parse(JSON.stringify(INITIAL_DATA));
     }
     try {
-      return JSON.parse(raw);
+      const data = JSON.parse(raw);
+      // Limpieza de datos: Asegurar que ninguna herramienta traiga señales por default
+      // Elimina el "Botón descarga excel" que vino por default (0 clicks / sin interacción)
+      if (data && Array.isArray(data.tools)) {
+        let changed = false;
+        data.tools.forEach(tool => {
+          if (tool.signals && Array.isArray(tool.signals)) {
+            const initialCount = tool.signals.length;
+            tool.signals = tool.signals.filter(s => {
+              const isDefaultSignal =
+                (s.id === "btn_descarga_excel" ||
+                 s.id === "boton-descarga-excel" ||
+                 (s.label && s.label.trim().toLowerCase() === "botón descarga excel") ||
+                 (s.label && s.label.trim().toLowerCase() === "boton descarga excel")) &&
+                (s.clicks === 0 || s.lastTriggered === "Sin señales aún" || !s.uniqueUsers || s.uniqueUsers.length === 0);
+              return !isDefaultSignal;
+            });
+            if (tool.signals.length !== initialCount) {
+              changed = true;
+              // Si la señal eliminada era la principal, reasignar a la primera señal real disponible
+              if (tool.signals.length > 0) {
+                const exists = tool.signals.some(s => s.id === tool.primarySignalId);
+                if (!exists) {
+                  tool.primarySignalId = tool.signals[0].id;
+                }
+              } else {
+                tool.primarySignalId = null;
+              }
+            }
+          }
+        });
+        if (changed) {
+          this.save(data);
+        }
+      }
+      return data;
     } catch (e) {
       console.error("Error loading localStorage, resetting to initial data", e);
       this.save(INITIAL_DATA);
@@ -906,24 +941,12 @@ function handleLinkTool(e) {
   const rolesRaw = document.getElementById("linkToolRoles").value.trim() || "Usuarios de Negocio";
   const apiKey = document.getElementById("linkToolApiKey").value.trim() || generateApiKey();
   const integrationType = document.getElementById("linkToolIntegration").value || "api";
-  const initialSignalName = document.getElementById("linkToolInitialSignal").value.trim() || "Botón descarga excel";
 
   if (!name || !projectId) return;
 
-  // Sin datos inventados: la señal inicial arranca en 0 clicks y sin
-  // usuarios hasta que lleguen eventos reales (desde el backend de
-  // telemetría, o manualmente con "+1 Click" en el modal de Señales).
-  const initialSignalId = slugify(initialSignalName) || "btn_descarga_excel";
-  const initialSignals = [
-    {
-      id: initialSignalId,
-      label: initialSignalName,
-      clicks: 0,
-      uniqueUsers: [],
-      lastTriggered: "Sin señales aún"
-    }
-  ];
-
+  // Ninguna herramienta trae señales por default:
+  // Las herramientas arrancan limpias (signals: []) y se pueblan conforme
+  // lleguen clicks reales desde la integración (API/CLI/MCP) o el simulador.
   const newTool = {
     id: generateToolId(name),
     projectId,
@@ -938,8 +961,8 @@ function handleLinkTool(e) {
     lastUsed: "Recién vinculada",
     apiKey,
     integrationType,
-    primarySignalId: initialSignalId,
-    signals: initialSignals,
+    primarySignalId: null,
+    signals: [],
     userRoles: rolesRaw.split(",").map(r => r.trim())
   };
 
@@ -956,7 +979,7 @@ function handleLinkTool(e) {
     toolName: newTool.name,
     projectId: project ? project.id : "N/A",
     projectName: project ? project.name : "N/A",
-    action: `Vinculó "${newTool.name}" con API Key y monitoreo de señal "${initialSignalName}"`,
+    action: `Vinculó "${newTool.name}" con API Key (a la espera de señales telemétricas)`,
     badgeType: "optimal"
   });
 
@@ -1069,20 +1092,44 @@ function closeToolSignalsModal() {
 
 function renderToolSignalsList(tool) {
   const container = document.getElementById("signalsModalList");
-  const primarySignal = (tool.signals || []).find(s => s.id === tool.primarySignalId) || tool.signals[0];
+  const hasSignals = tool.signals && tool.signals.length > 0;
+  const primarySignal = hasSignals ? ((tool.signals || []).find(s => s.id === tool.primarySignalId) || tool.signals[0]) : null;
 
   // Update Primary Highlight Card
-  document.getElementById("signalsPrimaryName").textContent = `Botón: ${primarySignal ? primarySignal.label : 'General'}`;
-  document.getElementById("signalsPrimaryCount").textContent = primarySignal ? primarySignal.clicks : 0;
-  const primaryUsersCount = (primarySignal && primarySignal.uniqueUsers) ? primarySignal.uniqueUsers.length : 0;
-  document.getElementById("signalsPrimaryExplanation").textContent =
-    `Esta señal define las ${primaryUsersCount} personas activas y la tasa de adopción mostrada en el resumen del proyecto.`;
+  if (primarySignal) {
+    document.getElementById("signalsPrimaryName").textContent = `Botón: ${primarySignal.label}`;
+    document.getElementById("signalsPrimaryCount").textContent = primarySignal.clicks || 0;
+    const primaryUsersCount = (primarySignal.uniqueUsers) ? primarySignal.uniqueUsers.length : 0;
+    document.getElementById("signalsPrimaryExplanation").textContent =
+      `Esta señal define las ${primaryUsersCount} personas activas y la tasa de adopción mostrada en el resumen del proyecto.`;
+  } else {
+    document.getElementById("signalsPrimaryName").textContent = "Sin señal de resumen";
+    document.getElementById("signalsPrimaryCount").textContent = "0";
+    document.getElementById("signalsPrimaryExplanation").textContent =
+      "Esta herramienta no tiene señales de botones por defecto. Se registrarán automáticamente cuando los usuarios interactúen con la herramienta.";
+  }
 
-  document.getElementById("signalsTotalCountLabel").textContent = `${tool.signals.length} señales registradas`;
+  document.getElementById("signalsTotalCountLabel").textContent = `${(tool.signals || []).length} señales registradas`;
+
+  if (!hasSignals) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 2.2rem 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--glass-border-sunset); border-radius: var(--radius-md);">
+        <div style="font-size: 2rem; margin-bottom: 0.6rem;">📡</div>
+        <h4 style="color: #ffffff; font-size: 0.95rem; margin-bottom: 0.35rem;">A la espera de señales telemétricas</h4>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); max-width: 480px; margin: 0 auto 0.8rem; line-height: 1.5;">
+          Esta herramienta no trae señales por defecto. En cuanto un usuario presione un botón en tu herramienta vinculada, aparecerá automáticamente aquí.
+        </p>
+        <span style="font-size: 0.76rem; color: var(--sunset-peach); font-family: var(--font-mono); background: rgba(255, 107, 74, 0.1); padding: 0.25rem 0.6rem; border-radius: var(--radius-sm);">
+          API Key asignada: ${tool.apiKey || 'Configurada'}
+        </span>
+      </div>
+    `;
+    return;
+  }
 
   // Render list of signals exactly formatted as requested:
-  // Botón - Botón descarga excel
-  // Clicks - 37
+  // Botón - [Nombre Botón]
+  // Clicks - [N]
   container.innerHTML = tool.signals.map(s => {
     const isPrimary = s.id === tool.primarySignalId;
     const usersCount = (s.uniqueUsers || []).length;
@@ -1105,7 +1152,7 @@ function renderToolSignalsList(tool) {
           </div>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
           ${!isPrimary ? `
             <button class="btn btn-sunset-secondary" style="padding: 0.38rem 0.8rem; font-size: 0.75rem;" onclick="setPrimarySignal('${tool.id}', '${s.id}')" title="Hacer que este botón determine las personas activas en el resumen del proyecto">
               ⭐ Fijar como Resumen
@@ -1119,6 +1166,10 @@ function renderToolSignalsList(tool) {
           <button class="btn btn-sunset-primary" style="padding: 0.38rem 0.8rem; font-size: 0.75rem;" onclick="sendSignalClick('${tool.id}', '${s.id}')" title="Simular click en este botón">
             +1 Click
           </button>
+
+          <button class="btn btn-glass" style="padding: 0.38rem 0.65rem; font-size: 0.75rem; color: #f87171;" onclick="deleteSignal('${tool.id}', '${s.id}')" title="Eliminar esta señal">
+            🗑️
+          </button>
         </div>
       </div>
     `;
@@ -1127,12 +1178,91 @@ function renderToolSignalsList(tool) {
 
 function renderToolQuickButtons(tool) {
   const container = document.getElementById("signalsQuickButtonsContainer");
+  if (!tool.signals || tool.signals.length === 0) {
+    container.innerHTML = `
+      <span style="font-size: 0.76rem; color: var(--text-muted); font-style: italic;">
+        No hay botones registrados aún. Ingresa un nombre abajo para enviar una señal de prueba.
+      </span>
+    `;
+    return;
+  }
   container.innerHTML = tool.signals.map(s => `
     <button class="btn btn-glass" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;" onclick="sendSignalClick('${tool.id}', '${s.id}')">
       🔘 ${s.label} (+1)
     </button>
   `).join("");
 }
+
+// Elimina una señal específica de la herramienta
+async function deleteSignal(toolId, signalId) {
+  const tool = store.getTools().find(t => t.id === toolId);
+  if (!tool || !tool.signals) return;
+
+  const targetSignal = tool.signals.find(s => s.id === signalId);
+  const signalName = targetSignal ? targetSignal.label : signalId;
+
+  if (!confirm(`¿Eliminar la señal "${signalName}" de esta herramienta?`)) {
+    return;
+  }
+
+  // Filtrar localmente
+  tool.signals = tool.signals.filter(s => s.id !== signalId);
+
+  // Si se eliminó la señal primaria, reasignar o anular
+  if (tool.primarySignalId === signalId) {
+    tool.primarySignalId = tool.signals.length > 0 ? tool.signals[0].id : null;
+  }
+
+  const primary = (tool.signals || []).find(s => s.id === tool.primarySignalId);
+  if (primary) {
+    tool.activeUsers = (primary.uniqueUsers || []).length;
+  } else {
+    tool.activeUsers = 0;
+  }
+  tool.weeklyInvocations = (tool.signals || []).reduce((sum, s) => sum + (s.clicks || 0), 0);
+
+  store.save();
+
+  // Eliminar también en el servidor SQLite si está disponible
+  try {
+    await fetch(`${TELEMETRY_API_BASE}/tool/${encodeURIComponent(tool.id)}/signal/${encodeURIComponent(signalId)}`, {
+      method: "DELETE"
+    });
+  } catch (err) {
+    // Modo offline o sin backend
+  }
+
+  // Registrar auditoría
+  const project = store.getProjects().find(p => p.id === tool.projectId);
+  store.addEvent({
+    id: `evt-${Date.now()}`,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    user: "PM / Administrador",
+    role: "Control de Proyectos",
+    toolId: tool.id,
+    toolName: tool.name,
+    projectId: project ? project.id : "N/A",
+    projectName: project ? project.name : "N/A",
+    action: `Eliminó la señal de botón "${signalName}" de la herramienta ${tool.name}`,
+    badgeType: "warning"
+  });
+
+  if (activeTelemetryToolId === toolId) {
+    renderToolSignalsList(tool);
+    renderToolQuickButtons(tool);
+    updateSnippetView(tool);
+  }
+
+  renderExecutiveKPIs();
+  renderProjectsView();
+  renderToolsMatrixView();
+  renderActivityStream();
+
+  if (selectedProjectId) {
+    openProjectDrawer(selectedProjectId);
+  }
+}
+window.deleteSignal = deleteSignal;
 
 // Change Primary Signal (Registro de Uso Resumen)
 function setPrimarySignal(toolId, signalId) {
@@ -1274,7 +1404,7 @@ function updateSnippetView(tool) {
   const apiKey = tool.apiKey || generateApiKey();
   document.getElementById("signalsModalApiKeyPreview").textContent = apiKey;
 
-  const primarySignal = (tool.signals || []).find(s => s.id === tool.primarySignalId) || { label: "Botón descarga excel" };
+  const primarySignal = (tool.signals || []).find(s => s.id === tool.primarySignalId) || (tool.signals && tool.signals[0]) || { id: "boton-descargar-excel", label: "Botón descargar excel" };
   const signalLabel = primarySignal.label;
   const snippetBox = document.getElementById("signalsCodeSnippet");
 

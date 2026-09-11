@@ -88,6 +88,21 @@ app.get('/api/telemetry/tool/:toolId', (req, res) => {
   }
 });
 
+// Elimina una señal específica de una herramienta (por id o etiqueta)
+app.delete('/api/telemetry/tool/:toolId/signal/:signalId', (req, res) => {
+  try {
+    const deleteStmt = db.prepare(`
+      DELETE FROM telemetry_events
+      WHERE tool_id = ? AND (signal_id = ? OR signal_label = ?)
+    `);
+    const result = deleteStmt.run(req.params.toolId, req.params.signalId, req.params.signalId);
+    res.json({ ok: true, deleted: result.changes });
+  } catch (err) {
+    console.error('Error eliminando señal de telemetría', err);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
 const selectRawEvents = db.prepare(`
   SELECT id, tool_id, signal_id, signal_label, user_name, created_at
   FROM telemetry_events
