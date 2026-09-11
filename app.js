@@ -141,6 +141,21 @@ function slugify(text) {
     .replace(/^_+|_+$/g, "");
 }
 
+// Id determin\u00edstico a partir del nombre de la herramienta (ej. "Wizard
+// Curvas Starcom" -> "wizard_curvas_starcom"), en vez de un id random con
+// timestamp. As\u00ed, quien arma una herramienta externa (ej. el Wizard) puede
+// dejar el tool_id "hardcodeado" de antemano con solo ponerle a la
+// herramienta el mismo nombre ac\u00e1 al vincularla \u2014 sin tener que crearla
+// primero en el dashboard y copiar/pegar un id generado despu\u00e9s.
+function generateToolId(name) {
+  const base = slugify(name) || "herramienta";
+  const existingIds = new Set(store.getTools().map(t => t.id));
+  if (!existingIds.has(base)) return base;
+  let i = 2;
+  while (existingIds.has(`${base}_${i}`)) i++;
+  return `${base}_${i}`;
+}
+
 // Helper: Calculate Project Metrics & Health Status
 function getProjectControlMetrics(project, tools) {
   const linkedTools = tools.filter(t => t.projectId === project.id);
@@ -851,7 +866,7 @@ function handleLinkTool(e) {
   ];
 
   const newTool = {
-    id: `tool-${Date.now()}`,
+    id: generateToolId(name),
     projectId,
     name,
     category,

@@ -26,4 +26,8 @@ function initSchema() {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_telemetry_events_tool_id ON telemetry_events(tool_id);`);
 }
 
+// Se corre acá, al cargar el módulo, para garantizar que la tabla ya existe
+// antes de que index.js prepare cualquier consulta contra ella.
+initSchema();
+
 module.exports = { db, initSchema, DB_PATH };

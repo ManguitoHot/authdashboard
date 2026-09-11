@@ -66,29 +66,38 @@ git push -u origin main
 
 ## 4. Crear la herramienta "Wizard Curvas Starcom" en el dashboard
 
+El `tool_id` que usa el Wizard **ya no lo genera el dashboard al azar** —
+sale directo del nombre que le pongas (ej. "Wizard Curvas Starcom" ->
+`wizard_curvas_starcom`). El Wizard ya trae ese id fijo hardcodeado, así que
+lo único que tenés que hacer es que el nombre matchee:
+
 1. Abrí el dashboard ya desplegado, creá el proyecto si no existe.
-2. **+ Vincular Herramienta** → nombre "Wizard Curvas Starcom", con el
-   nombre de señal inicial "Botón descargar excel".
-3. Al guardar, el dashboard le asigna un `id` (ej. `tool-1699999999999`) y
-   una **API Key** (`ak_live_...`). Vas a necesitar ambos para el paso 5.
-   Los podés volver a ver abriendo esa herramienta → "Telemetría de
-   Señales" → botón de copiar API Key.
+2. **+ Vincular Herramienta** → nombre **exactamente** "Wizard Curvas
+   Starcom" (así el id que arma el dashboard es `wizard_curvas_starcom`,
+   igual al que ya está en el Wizard). Nombre de señal inicial: "Botón
+   descargar excel".
+3. Guardá. No hace falta copiar ningún id — ya coincide solo.
+4. Si el día de mañana vinculás **otra** herramienta (otro Wizard, otra
+   calculadora, etc.), dale un nombre distinto, y en esa herramienta
+   cambiá el `TELEMETRY_TOOL_ID` de su propio HTML para que matchee su
+   propio nombre/slug — así el dashboard las distingue a todas por
+   separado, aunque compartan la misma `TELEMETRY_API_KEY`.
 
 ## 5. Conectar el Wizard al backend real
 
 Abrí `Wizard_Curvas_Starcom.html` y buscá este bloque cerca del final
-(ya está en el archivo, solo hay que completar 3 líneas):
+(ya está en el archivo, el `TELEMETRY_TOOL_ID` ya viene puesto — solo
+hay que completar la URL y la API Key):
 
 ```js
 const TELEMETRY_ENDPOINT = ''; // ej: 'https://dashboard.tudominio.com/api/telemetry/signal'
-const TELEMETRY_API_KEY = '';  // API Key del Wizard, generada en el dashboard (Vincular Herramienta)
-const TELEMETRY_TOOL_ID = '';  // id del Wizard en el dashboard (ej. "tool-1234567890")
+const TELEMETRY_API_KEY = '';  // la TELEMETRY_API_KEY que pusiste en EasyPanel (paso 2)
+const TELEMETRY_TOOL_ID = 'wizard_curvas_starcom'; // ya viene así, no lo toques
 ```
 
-Completalas con la URL real, la API Key y el `id` del paso 4, guardá el
-archivo, y listo — así queda para todos los que usen ese mismo
-`Wizard_Curvas_Starcom.html` (si lo compartís por archivo, cada copia ya
-sale con esto configurado).
+Completá la URL y la API Key, guardá el archivo, y listo — así queda para
+todos los que usen ese mismo `Wizard_Curvas_Starcom.html` (si lo
+compartís por archivo, cada copia ya sale con esto configurado).
 
 ## 6. Probar
 

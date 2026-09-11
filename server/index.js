@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const { db, initSchema, DB_PATH } = require('./db');
+const { db, DB_PATH } = require('./db'); // requerir db.js ya crea la tabla (ver db.js)
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -89,10 +89,4 @@ app.get('/api/health', (req, res) => res.json({ ok: true, db: DB_PATH }));
 // Sirve el dashboard (index.html/app.js/styles.css) desde el mismo servicio.
 app.use(express.static(path.join(__dirname, '..')));
 
-try {
-  initSchema();
-  app.listen(PORT, () => console.log(`Dashboard + telemetría escuchando en :${PORT} (db: ${DB_PATH})`));
-} catch (err) {
-  console.error('No se pudo inicializar la base de datos', err);
-  process.exit(1);
-}
+app.listen(PORT, () => console.log(`Dashboard + telemetría escuchando en :${PORT} (db: ${DB_PATH})`));
