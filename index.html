@@ -99,6 +99,12 @@
             </svg>
             Auditoría de Uso en Vivo
           </button>
+          <button class="nav-tab" data-view="telemetry">
+            <svg style="width: 15px; height: 15px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7c0-1.66 3.58-3 8-3s8 1.34 8 3-3.58 3-8 3-8-1.34-8-3zm0 0v10c0 1.66 3.58 3 8 3s8-1.34 8-3V7M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3" />
+            </svg>
+            Base de Datos de Señales
+          </button>
         </div>
 
         <div class="search-input-wrapper">
@@ -335,6 +341,63 @@
               <strong>💡 Regla de Control:</strong> Un proyecto pasa a estado <span style="color: var(--status-danger-text);">Crítico</span> si su adopción media cae por debajo del 50%, y a <span style="color: var(--status-optimal-text);">Saludable</span> cuando supera el 80%.
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real Telemetry Database View -->
+    <section id="view-telemetry" class="dashboard-view">
+      <div class="view-section-header">
+        <div>
+          <h2 class="view-section-title">
+            <svg style="width: 22px; height: 22px; color: var(--sunset-amber);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7c0-1.66 3.58-3 8-3s8 1.34 8 3-3.58 3-8 3-8-1.34-8-3zm0 0v10c0 1.66 3.58 3 8 3s8-1.34 8-3V7M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3" />
+            </svg>
+            Base de Datos de Señales (eventos reales)
+          </h2>
+          <p class="view-section-subtitle">
+            Cada fila es un evento real que mandó una herramienta conectada (ej. un click o un arrastre en el Wizard). Sin agregar ni inventar nada — tal cual llegó al backend.
+          </p>
+        </div>
+      </div>
+
+      <div class="stream-timeline-card" style="margin-bottom: 1rem;">
+        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between;">
+          <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center;">
+            <select id="telemetryToolFilter" class="filter-pill" style="cursor: pointer;">
+              <option value="">Todas las herramientas</option>
+            </select>
+            <button class="btn btn-sunset-secondary" style="padding: 0.45rem 0.9rem; font-size: 0.78rem;" onclick="refreshTelemetryEvents()">
+              ↻ Actualizar
+            </button>
+          </div>
+          <div style="display: flex; gap: 0.6rem;">
+            <button class="btn btn-sunset-secondary" style="padding: 0.45rem 0.9rem; font-size: 0.78rem;" onclick="downloadTelemetryCsv()">
+              ⬇ Descargar CSV
+            </button>
+            <button class="btn btn-sunset-primary" style="padding: 0.45rem 0.9rem; font-size: 0.78rem;" onclick="downloadTelemetryDb()">
+              ⬇ Descargar Base de Datos (.db)
+            </button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto; margin-top: 1rem;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+            <thead>
+              <tr style="text-align: left; color: var(--text-muted); text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.04em; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <th style="padding: 0.6rem 0.5rem;">Fecha / Hora</th>
+                <th style="padding: 0.6rem 0.5rem;">Herramienta (tool_id)</th>
+                <th style="padding: 0.6rem 0.5rem;">Señal</th>
+                <th style="padding: 0.6rem 0.5rem;">Usuario</th>
+              </tr>
+            </thead>
+            <tbody id="telemetryEventsTableBody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+          <p id="telemetryEventsEmpty" style="display:none; text-align:center; color: var(--text-muted); padding: 1.5rem 0;">
+            Todavía no llegó ningún evento real de esta herramienta.
+          </p>
         </div>
       </div>
     </section>

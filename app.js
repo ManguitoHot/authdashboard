@@ -649,6 +649,65 @@ function switchView(viewName) {
   if (viewName === "projects") renderProjectsView();
   if (viewName === "tools") renderToolsMatrixView();
   if (viewName === "stream") renderActivityStream();
+  if (viewName === "telemetry") renderTelemetryView();
+}
+
+// ---------- Vista "Base de Datos de Señales" (eventos reales, sin agregar) ----------
+
+function renderTelemetryView() {
+  const select = document.getElementById("telemetryToolFilter");
+  const currentValue = select.value;
+  const tools = store.getTools();
+  select.innerHTML = '<option value="">Todas las herramientas</option>' +
+    tools.map(t => `<option value="${t.id}">${t.name} (${t.id})</option>`).join("");
+  select.value = tools.some(t => t.id === currentValue) ? currentValue : "";
+  refreshTelemetryEvents();
+}
+
+async function refreshTelemetryEvents() {
+  const toolId = document.getElementById("telemetryToolFilter").value;
+  const tbody = document.getElementById("telemetryEventsTableBody");
+  const empty = document.getElementById("telemetryEventsEmpty");
+  try {
+    const url = new URL(`${TELEMETRY_API_BASE}/events`, window.location.origin);
+    url.searchParams.set("limit", "200");
+    if (toolId) url.searchParams.set("tool_id", toolId);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const events = data.events || [];
+
+    if (events.length === 0) {
+      tbody.innerHTML = "";
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+    tbody.innerHTML = events.map(ev => `
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <td style="padding: 0.55rem 0.5rem; color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.76rem;">${ev.created_at}</td>
+        <td style="padding: 0.55rem 0.5rem; color: #ffffff;">${ev.tool_id}</td>
+        <td style="padding: 0.55rem 0.5rem;"><span style="color: var(--sunset-peach); font-weight: 600;">${ev.signal_label}</span></td>
+        <td style="padding: 0.55rem 0.5rem; color: var(--text-secondary);">${ev.user_name || "—"}</td>
+      </tr>
+    `).join("");
+  } catch (err) {
+    console.warn("No se pudo cargar la base de datos de señales real", err);
+    tbody.innerHTML = "";
+    empty.textContent = "No se pudo conectar con el backend de telemetría (¿está caído o sin internet?).";
+    empty.style.display = "block";
+  }
+}
+
+function downloadTelemetryCsv() {
+  const toolId = document.getElementById("telemetryToolFilter").value;
+  const url = new URL(`${TELEMETRY_API_BASE}/export.csv`, window.location.origin);
+  if (toolId) url.searchParams.set("tool_id", toolId);
+  window.location.href = url.toString();
+}
+
+function downloadTelemetryDb() {
+  window.location.href = `${TELEMETRY_API_BASE}/export/db`;
 }
 
 // Project Detail Drawer

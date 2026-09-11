@@ -110,6 +110,15 @@ compartís por archivo, cada copia ya sale con esto configurado).
    y fijate si el POST a `/api/telemetry/signal` devuelve 201 (ok) o un
    error (401 = API Key mal copiada, CORS/red = revisar dominio/HTTPS).
 
+## 7. Ver los datos crudos y descargar la base
+
+En el dashboard, pestaña **"Base de Datos de Señales"** (al lado de
+"Auditoría de Uso en Vivo") — tabla con cada evento real tal cual llegó
+(fecha, herramienta, señal, usuario), filtro por herramienta, y dos botones:
+- **Descargar CSV** — abre directo en Excel.
+- **Descargar Base de Datos (.db)** — el archivo SQLite completo, por si
+  querés inspeccionarlo con algo como [DB Browser for SQLite](https://sqlitebrowser.org/).
+
 ## Notas
 
 - Como el Wizard se abre como archivo local (`file://`) en la máquina de
