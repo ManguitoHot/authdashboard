@@ -1,13 +1,14 @@
-# 🌅 Dashboard de Control de Proyectos & Adopción de Herramientas (Sunset Glass)
+# ⚡ Dashboard de Control de Proyectos & Adopción de Herramientas (Cyber-Tactical HUD)
 
-Un centro de comando diseñado específicamente para **monitorear cuántas personas utilizan tus herramientas**, estructurado bajo una metodología de **Control de Proyectos** (Project Governance & Tracking) en lugar de una visualización de datos genérica.
+Un centro de comando diseñado específicamente para **monitorear cuántas personas utilizan tus herramientas**, estructurado bajo una metodología de **Control de Proyectos** (Project Governance & Tracking) con estética de **Telemetría Táctica de Alta Precisión**.
 
 ---
 
-## 🎨 Estilo Visual: Sunset Glass
-- **Fondo Atmosférico Crepuscular**: Gradientes oscuros profundos (`#090714` a `#1b1535`) con iluminación ambiental flotante en tonos cálidos.
-- **Glassmorphism Cálido**: Paneles esmerilados translúcidos con `backdrop-filter: blur(20px) saturate(180%)`, bordes luminosos con destellos de atardecer y sombras multicapa.
-- **Paleta Sunset**: Naranja atardecer, coral vibrante, ámbar dorado, fucsia crepuscular y violeta suave.
+## 🎨 Estilo Visual: Cyber-Tactical / Telemetry HUD (Neones Atenuados)
+- **Lienzo OLED de Telemetría Táctica**: Fondo oscuro absoluto (`#040608` a `#0f1420`) con patrón de retícula técnica de ingeniería de 28px.
+- **Neones Suaves y Controlados**: Fósforo cian atenuado (`#00bcd4`), azul cobalto de telemetría (`#0284c7`), ámbar táctico (`#eab308`) y verde operativo (`#10b981`), calibrados para evitar la fatiga visual o sobre-saturación.
+- **Monolito de Cristal Táctico**: Tarjetas translúcidas oscurecidas (`rgba(8, 12, 20, 0.82)`) con bordes técnicos de 1px (`rgba(0, 188, 212, 0.25)`) y halos de sombra suaves y focalizados.
+- **Tipografía de Precisión**: Combinación de `Space Grotesk`, `Plus Jakarta Sans` y `JetBrains Mono` para lectura inmediata de identificadores y datos numéricos.
 
 ---
 

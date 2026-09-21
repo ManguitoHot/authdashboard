@@ -1,85 +1,86 @@
 /* ==========================================================================
-   SUNSET GLASS DESIGN SYSTEM - PROJECT CONTROL & TOOL MONITORING
+   CYBER-TACTICAL / TELEMETRY HUD DESIGN SYSTEM - MISSION CONTROL & GOVERNANCE
+   Estilo: Telemetría Militar & Aeroespacial de Alta Densidad (Neones Atenuados)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 :root {
-  /* Twilight Canvas & Ambient Colors */
-  --bg-twilight-950: #090714;
-  --bg-twilight-900: #0f0c1d;
-  --bg-twilight-850: #141027;
-  --bg-twilight-800: #1b1535;
+  /* Tactical OLED Canvas & Telemetry Base */
+  --bg-twilight-950: #040608;
+  --bg-twilight-900: #070a0f;
+  --bg-twilight-850: #0a0e16;
+  --bg-twilight-800: #0f1420;
 
-  /* Sunset Warm Spectrum */
-  --sunset-orange: #ff6b4a;
-  --sunset-coral: #f43f5e;
-  --sunset-amber: #f59e0b;
-  --sunset-peach: #fb923c;
-  --sunset-rose: #ec4899;
-  --sunset-purple: #8b5cf6;
-  --sunset-violet: #6366f1;
+  /* Subdued Tactical Phosphor Spectrum (Neones Suaves y Controlados) */
+  --sunset-orange: #00bcd4; /* Cian Fósforo Atenuado */
+  --sunset-coral: #0284c7;  /* Azul Cobalto de Telemetría */
+  --sunset-amber: #eab308;  /* Ámbar Táctico de Precaución */
+  --sunset-peach: #38bdf8;  /* Cian Cielo Muted */
+  --sunset-rose: #0ea5e9;   /* Azul Técnico */
+  --sunset-purple: #0284c7; /* Azul Marino Técnico */
+  --sunset-violet: #0369a1; /* Pizarra Táctico */
 
-  /* Gradients */
-  --grad-sunset-primary: linear-gradient(135deg, #ff6b4a 0%, #ff8e53 45%, #f43f5e 100%);
-  --grad-sunset-gold: linear-gradient(135deg, #f59e0b 0%, #fb923c 100%);
-  --grad-twilight-glow: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
-  --grad-sunset-ocean: linear-gradient(135deg, #f43f5e 0%, #6366f1 100%);
-  --grad-border-glow: linear-gradient(135deg, rgba(255, 142, 83, 0.4) 0%, rgba(244, 63, 94, 0.15) 50%, rgba(139, 92, 246, 0.3) 100%);
+  /* Gradients Técnicos de Alta Precisión */
+  --grad-sunset-primary: linear-gradient(135deg, #0284c7 0%, #00bcd4 100%);
+  --grad-sunset-gold: linear-gradient(135deg, #ca8a04 0%, #eab308 100%);
+  --grad-twilight-glow: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%);
+  --grad-sunset-ocean: linear-gradient(135deg, #00bcd4 0%, #0284c7 100%);
+  --grad-border-glow: linear-gradient(135deg, rgba(0, 188, 212, 0.25) 0%, rgba(14, 165, 233, 0.08) 50%, rgba(2, 132, 199, 0.18) 100%);
 
-  /* Glass Materials */
-  --glass-bg-subtle: rgba(22, 17, 43, 0.45);
-  --glass-bg-card: rgba(26, 20, 51, 0.62);
-  --glass-bg-elevated: rgba(34, 25, 66, 0.75);
-  --glass-bg-modal: rgba(21, 16, 42, 0.88);
-  --glass-bg-input: rgba(15, 11, 29, 0.65);
+  /* Materiales Monolito de Cristal Táctico */
+  --glass-bg-subtle: rgba(7, 10, 16, 0.72);
+  --glass-bg-card: rgba(8, 12, 20, 0.82);
+  --glass-bg-elevated: rgba(12, 18, 28, 0.90);
+  --glass-bg-modal: rgba(6, 9, 15, 0.96);
+  --glass-bg-input: rgba(5, 7, 12, 0.88);
 
-  --glass-border-light: rgba(255, 255, 255, 0.12);
-  --glass-border-sunset: rgba(255, 126, 95, 0.28);
-  --glass-border-focus: rgba(255, 107, 74, 0.65);
+  --glass-border-light: rgba(148, 163, 184, 0.14);
+  --glass-border-sunset: rgba(0, 188, 212, 0.25);
+  --glass-border-focus: rgba(0, 188, 212, 0.55);
 
-  /* Shadows & Neon Ambient Glows */
-  --glow-sunset-sm: 0 4px 16px 0 rgba(255, 107, 74, 0.18);
-  --glow-sunset-md: 0 8px 32px 0 rgba(255, 107, 74, 0.25);
-  --glow-sunset-lg: 0 16px 48px 0 rgba(244, 63, 94, 0.32);
-  --glass-shadow: 0 12px 40px 0 rgba(4, 2, 12, 0.55), inset 0 1px 1px 0 rgba(255, 255, 255, 0.12);
-  --glass-shadow-hover: 0 16px 48px 0 rgba(4, 2, 12, 0.65), 0 0 24px 0 rgba(255, 107, 74, 0.25), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+  /* Sombras y Halos Atenuados (Brillo Controlado sin saturación ocular) */
+  --glow-sunset-sm: 0 2px 8px 0 rgba(0, 188, 212, 0.10);
+  --glow-sunset-md: 0 4px 14px 0 rgba(0, 188, 212, 0.15);
+  --glow-sunset-lg: 0 6px 20px 0 rgba(0, 188, 212, 0.18);
+  --glass-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.65), inset 0 1px 1px 0 rgba(0, 188, 212, 0.06);
+  --glass-shadow-hover: 0 12px 28px 0 rgba(0, 0, 0, 0.75), 0 0 12px 0 rgba(0, 188, 212, 0.14), inset 0 1px 1px 0 rgba(0, 188, 212, 0.12);
 
-  /* Typography & Layout */
-  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Tipografía y Retícula */
+  --font-display: 'Space Grotesk', 'Outfit', -apple-system, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --text-primary: #ffffff;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --text-sunset-bright: #fed7aa;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-sunset-bright: #7dd3fc;
 
-  /* Status Tokens */
-  --status-optimal-bg: rgba(16, 185, 129, 0.16);
-  --status-optimal-border: rgba(16, 185, 129, 0.38);
-  --status-optimal-text: #34d399;
+  /* Tokens de Estado Tácticos (Fósforo Controlado) */
+  --status-optimal-bg: rgba(16, 185, 129, 0.12);
+  --status-optimal-border: rgba(16, 185, 129, 0.32);
+  --status-optimal-text: #10b981;
 
-  --status-warning-bg: rgba(245, 158, 11, 0.16);
-  --status-warning-border: rgba(245, 158, 11, 0.4);
-  --status-warning-text: #fbbf24;
+  --status-warning-bg: rgba(234, 179, 8, 0.12);
+  --status-warning-border: rgba(234, 179, 8, 0.35);
+  --status-warning-text: #eab308;
 
-  --status-danger-bg: rgba(244, 63, 94, 0.16);
-  --status-danger-border: rgba(244, 63, 94, 0.45);
-  --status-danger-text: #fb7185;
+  --status-danger-bg: rgba(244, 63, 94, 0.12);
+  --status-danger-border: rgba(244, 63, 94, 0.35);
+  --status-danger-text: #f43f5e;
 
-  --status-planned-bg: rgba(139, 92, 246, 0.16);
-  --status-planned-border: rgba(139, 92, 246, 0.38);
-  --status-planned-text: #c084fc;
+  --status-planned-bg: rgba(14, 165, 233, 0.12);
+  --status-planned-border: rgba(14, 165, 233, 0.32);
+  --status-planned-text: #38bdf8;
 
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 26px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-full: 9999px;
 
-  --transition-smooth: all 0.26s cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-bounce: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-smooth: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-bounce: all 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Light Reset */
@@ -97,6 +98,11 @@ html {
 body {
   font-family: var(--font-body);
   background-color: var(--bg-twilight-950);
+  background-image: 
+    linear-gradient(rgba(0, 188, 212, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 188, 212, 0.022) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
   position: relative;
@@ -105,18 +111,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Ambient Sunset Atmospheric Backdrops */
+/* Halos de Telemetría Suaves (Subdued Glows) */
 .ambient-glow-1 {
   position: fixed;
   top: -150px;
   right: -100px;
   width: 650px;
   height: 650px;
-  background: radial-gradient(circle, rgba(255, 107, 74, 0.22) 0%, rgba(244, 63, 94, 0.12) 40%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 188, 212, 0.08) 0%, rgba(2, 132, 199, 0.03) 45%, transparent 70%);
   filter: blur(80px);
   z-index: 0;
   pointer-events: none;
-  animation: floatAmbient 18s ease-in-out infinite alternate;
+  animation: floatAmbient 22s ease-in-out infinite alternate;
 }
 
 .ambient-glow-2 {
@@ -125,11 +131,11 @@ body {
   left: -200px;
   width: 700px;
   height: 700px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.18) 0%, rgba(236, 72, 153, 0.1) 45%, transparent 70%);
+  background: radial-gradient(circle, rgba(2, 132, 199, 0.06) 0%, rgba(14, 165, 233, 0.02) 45%, transparent 70%);
   filter: blur(90px);
   z-index: 0;
   pointer-events: none;
-  animation: floatAmbientReverse 22s ease-in-out infinite alternate;
+  animation: floatAmbientReverse 26s ease-in-out infinite alternate;
 }
 
 .ambient-glow-3 {
@@ -138,7 +144,7 @@ body {
   right: 25%;
   width: 550px;
   height: 550px;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(255, 107, 74, 0.08) 50%, transparent 75%);
+  background: radial-gradient(circle, rgba(234, 179, 8, 0.04) 0%, rgba(0, 188, 212, 0.02) 50%, transparent 75%);
   filter: blur(85px);
   z-index: 0;
   pointer-events: none;
@@ -236,7 +242,7 @@ body {
   font-size: 1.65rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #ffffff 30%, #fed7aa 100%);
+  background: linear-gradient(135deg, #ffffff 30%, #bae6fd 75%, #38bdf8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: flex;
@@ -259,9 +265,9 @@ body {
   gap: 0.4rem;
   padding: 0.2rem 0.65rem;
   border-radius: var(--radius-full);
-  background: rgba(16, 185, 129, 0.18);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  color: #10b981;
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -273,7 +279,7 @@ body {
   height: 7px;
   border-radius: 50%;
   background-color: #10b981;
-  box-shadow: 0 0 10px #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
   animation: livePulse 2s infinite;
 }
 
