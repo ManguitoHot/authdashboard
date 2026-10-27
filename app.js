@@ -685,6 +685,7 @@ function switchView(viewName) {
   if (viewName === "tools") renderToolsMatrixView();
   if (viewName === "stream") renderActivityStream();
   if (viewName === "telemetry") renderTelemetryView();
+  if (window.networkView) viewName === "network" ? networkView.start() : networkView.stop();
 }
 
 // ---------- Vista "Base de Datos de Señales" (eventos reales, sin agregar) ----------

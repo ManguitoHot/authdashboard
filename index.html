@@ -93,6 +93,17 @@
             </svg>
             Matriz de Herramientas
           </button>
+          <button class="nav-tab" data-view="network">
+            <svg style="width: 15px; height: 15px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="2.5" stroke-width="2" />
+              <circle cx="5" cy="6" r="1.8" stroke-width="2" />
+              <circle cx="19" cy="7" r="1.8" stroke-width="2" />
+              <circle cx="6" cy="19" r="1.8" stroke-width="2" />
+              <circle cx="18" cy="18" r="1.8" stroke-width="2" />
+              <path stroke-linecap="round" stroke-width="1.6" d="M10 10.5L6.4 7.3M14 10.8l3.6-2.8M10.3 13.8L7.3 17.5M13.8 13.9l2.9 2.7" />
+            </svg>
+            Red
+          </button>
           <button class="nav-tab" data-view="stream">
             <svg style="width: 15px; height: 15px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -341,6 +352,31 @@
               <strong>💡 Regla de Control:</strong> Un proyecto pasa a estado <span style="color: var(--status-danger-text);">Crítico</span> si su adopción media cae por debajo del 50%, y a <span style="color: var(--status-optimal-text);">Saludable</span> cuando supera el 80%.
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Network (atom / neuron) View -->
+    <section id="view-network" class="dashboard-view">
+      <div class="view-section-header">
+        <div>
+          <h2 class="view-section-title">Red de Proyectos, Herramientas y Señales</h2>
+          <p class="view-section-subtitle">
+            Cada nodo es real: proyectos, herramientas y señales de telemetría. Pasa el cursor para ver clicks, última vez y usuario; haz clic para abrir su ficha; arrastra para mover.
+          </p>
+        </div>
+      </div>
+      <div class="network-card">
+        <canvas id="networkCanvas"></canvas>
+        <div id="networkTooltip" class="network-tooltip"></div>
+        <div id="networkEmpty" class="network-empty">Aún no hay proyectos. Crea uno y vincula una herramienta para verlo aquí.</div>
+        <div class="network-legend">
+          <span><i style="background:#38bdf8"></i>Automation Lead</span>
+          <span><i style="background:#10b981"></i>Proyecto saludable</span>
+          <span><i style="background:#eab308"></i>En riesgo</span>
+          <span><i style="background:#f43f5e"></i>Crítico</span>
+          <span><i style="background:#00bcd4"></i>Herramienta</span>
+          <span><i style="background:#94a3b8"></i>Señal</span>
         </div>
       </div>
     </section>
@@ -810,5 +846,6 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="network.js"></script>
 </body>
 </html>
