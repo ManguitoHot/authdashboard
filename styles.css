@@ -1733,6 +1733,34 @@ body {
   pointer-events: none;
 }
 
+.network-zoom {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.network-zoom button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--text-primary);
+  background: var(--glass-bg-elevated);
+  border: 1px solid var(--glass-border-light);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.network-zoom button:hover {
+  border-color: var(--glass-border-sunset);
+}
+
 .network-legend i {
   display: inline-block;
   width: 8px;

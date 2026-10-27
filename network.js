@@ -34,6 +34,9 @@
   let moved = false;
   let running = false;
   let raf = 0;
+  const view = { k: 1, x: 0, y: 0 }; // cámara: pantalla = mundo * k + (x, y)
+  const K_MIN = 0.3, K_MAX = 3;
+  let panning = null;
   let alpha = 1; // "temperatura" de la simulación: baja sola y se reaviva al interactuar
   const lastClicks = new Map(); // id de señal -> clicks vistos, para detectar señales nuevas
   const pulses = []; // { id, t }
@@ -150,7 +153,10 @@
   }
 
   function draw() {
+    const dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
+    ctx.setTransform(dpr * view.k, 0, 0, dpr * view.k, dpr * view.x, dpr * view.y);
     const focus = hover ? neighborsOf(hover) : null;
 
     links.forEach((l) => {
@@ -212,14 +218,31 @@
     U = Math.max(120, Math.min(width / 2, height / 2) - 30);
   }
 
+  // Devuelve el nodo bajo el puntero: (x, y) en coordenadas del mundo, (sx, sy) en pantalla.
   function pick(e) {
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    const x = (sx - view.x) / view.k, y = (sy - view.y) / view.k;
     for (let i = nodes.length - 1; i >= 0; i--) {
       const n = nodes[i];
-      if ((n.x - x) ** 2 + (n.y - y) ** 2 <= (n.r + 4) ** 2) return { n, x, y };
+      if ((n.x - x) ** 2 + (n.y - y) ** 2 <= (n.r + 4) ** 2) return { n, x, y, sx, sy };
     }
-    return { n: null, x, y };
+    return { n: null, x, y, sx, sy };
+  }
+
+  // Cambia el zoom manteniendo fijo el punto (px, py) de la pantalla (por defecto, el centro).
+  function zoomBy(factor, px = width / 2, py = height / 2) {
+    const k = Math.min(K_MAX, Math.max(K_MIN, view.k * factor));
+    const wx = (px - view.x) / view.k, wy = (py - view.y) / view.k;
+    view.k = k;
+    view.x = px - wx * k;
+    view.y = py - wy * k;
+    if (!running) draw();
+  }
+
+  function resetView() {
+    view.k = 1; view.x = 0; view.y = 0;
+    if (!running) draw();
   }
 
   function tooltipHtml(n) {
@@ -239,22 +262,39 @@
   }
 
   canvas.addEventListener("pointermove", (e) => {
-    const { n, x, y } = pick(e);
+    const { n, x, y, sx, sy } = pick(e);
+    if (panning) {
+      view.x = panning.vx + (sx - panning.sx);
+      view.y = panning.vy + (sy - panning.sy);
+      canvas.style.cursor = "grabbing";
+      return;
+    }
     if (drag) { drag.x = x; drag.y = y; moved = true; alpha = Math.max(alpha, 0.5); }
     hover = drag || n;
-    canvas.style.cursor = hover ? (drag ? "grabbing" : "pointer") : "default";
+    canvas.style.cursor = hover ? (drag ? "grabbing" : "pointer") : "grab";
     if (hover) {
       tip.innerHTML = tooltipHtml(hover);
       tip.style.display = "block";
-      tip.style.left = Math.max(8, Math.min(x + 16, width - tip.offsetWidth - 8)) + "px";
-      tip.style.top = Math.max(8, Math.min(y + 16, height - tip.offsetHeight - 8)) + "px";
+      tip.style.left = Math.max(8, Math.min(sx + 16, width - tip.offsetWidth - 8)) + "px";
+      tip.style.top = Math.max(8, Math.min(sy + 16, height - tip.offsetHeight - 8)) + "px";
     } else tip.style.display = "none";
   });
   canvas.addEventListener("pointerdown", (e) => {
-    const { n } = pick(e);
-    if (n) { drag = n; moved = false; canvas.setPointerCapture(e.pointerId); }
+    const { n, sx, sy } = pick(e);
+    if (n) { drag = n; moved = false; }
+    else panning = { sx, sy, vx: view.x, vy: view.y }; // arrastrar el fondo mueve la vista
+    canvas.setPointerCapture(e.pointerId);
   });
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const { sx, sy } = pick(e);
+    zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12, sx, sy);
+  }, { passive: false });
+  document.getElementById("networkZoomIn")?.addEventListener("click", () => zoomBy(1.25));
+  document.getElementById("networkZoomOut")?.addEventListener("click", () => zoomBy(1 / 1.25));
+  document.getElementById("networkZoomReset")?.addEventListener("click", resetView);
   canvas.addEventListener("pointerup", () => {
+    panning = null;
     const n = drag; drag = null;
     if (!n || moved) return;
     // Clic sin arrastre: abre la ficha que ya existe en el dashboard.
