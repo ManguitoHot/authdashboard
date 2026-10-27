@@ -1186,6 +1186,45 @@ function renderToolQuickButtons(tool) {
   `).join("");
 }
 
+// Key de administración (la TELEMETRY_API_KEY del servidor) para borrar señales.
+// Se pide una sola vez y queda guardada en este navegador.
+const ADMIN_KEY_STORAGE = "telemetry_admin_key";
+
+function getAdminKey() {
+  try { return localStorage.getItem(ADMIN_KEY_STORAGE) || ""; } catch (e) { return ""; }
+}
+
+function setAdminKey(key) {
+  try {
+    if (key) localStorage.setItem(ADMIN_KEY_STORAGE, key);
+    else localStorage.removeItem(ADMIN_KEY_STORAGE);
+  } catch (e) { /* sin storage disponible */ }
+}
+
+// Devuelve true si la señal se borró en el servidor (o no hay backend: modo offline).
+async function deleteSignalOnServer(toolId, signalId) {
+  const url = `${TELEMETRY_API_BASE}/tool/${encodeURIComponent(toolId)}/signal/${encodeURIComponent(signalId)}`;
+  let key = getAdminKey();
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let res;
+    try {
+      res = await fetch(url, { method: "DELETE", headers: key ? { "X-API-KEY": key } : {} });
+    } catch (err) {
+      return true; // Modo offline o sin backend
+    }
+    if (res.status !== 401) return res.ok || res.status === 404;
+
+    setAdminKey("");
+    key = (prompt("Para eliminar señales ingresá la TELEMETRY_API_KEY del servidor:") || "").trim();
+    if (!key) return false;
+    setAdminKey(key);
+  }
+
+  alert("La API Key no es válida. La señal no se eliminó.");
+  return false;
+}
+
 // Elimina una señal específica de la herramienta
 async function deleteSignal(toolId, signalId) {
   const tool = store.getTools().find(t => t.id === toolId);
@@ -1197,6 +1236,11 @@ async function deleteSignal(toolId, signalId) {
   if (!confirm(`¿Eliminar la señal "${signalName}" de esta herramienta?`)) {
     return;
   }
+
+  // Eliminar primero en el servidor SQLite (requiere la TELEMETRY_API_KEY).
+  // Si el servidor rechaza la key, no se borra localmente para no desincronizar.
+  const deletedOnServer = await deleteSignalOnServer(tool.id, signalId);
+  if (!deletedOnServer) return;
 
   // Filtrar localmente
   tool.signals = tool.signals.filter(s => s.id !== signalId);
@@ -1215,15 +1259,6 @@ async function deleteSignal(toolId, signalId) {
   tool.weeklyInvocations = (tool.signals || []).reduce((sum, s) => sum + (s.clicks || 0), 0);
 
   store.save();
-
-  // Eliminar también en el servidor SQLite si está disponible
-  try {
-    await fetch(`${TELEMETRY_API_BASE}/tool/${encodeURIComponent(tool.id)}/signal/${encodeURIComponent(signalId)}`, {
-      method: "DELETE"
-    });
-  } catch (err) {
-    // Modo offline o sin backend
-  }
 
   // Registrar auditoría
   const project = store.getProjects().find(p => p.id === tool.projectId);

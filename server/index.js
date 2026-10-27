@@ -14,14 +14,14 @@ app.use(express.json());
 // modificar nada sensible.
 app.use('/api', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-KEY');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
 
-// Solo protege ESCRITURA (POST /signal) -> evita que cualquiera infle los
-// contadores. Los GET (ver señales, eventos crudos, exportar CSV/DB) quedan
+// Protege ESCRITURA (POST /signal y DELETE de señales) -> evita que
+// cualquiera infle o borre los contadores. Los GET (ver señales, eventos crudos, exportar CSV/DB) quedan
 // públicos a propósito, para que el propio dashboard los pueda mostrar sin
 // tener que llevar la key de escritura en el código del cliente.
 function requireApiKey(req, res, next) {
@@ -89,7 +89,7 @@ app.get('/api/telemetry/tool/:toolId', (req, res) => {
 });
 
 // Elimina una señal específica de una herramienta (por id o etiqueta)
-app.delete('/api/telemetry/tool/:toolId/signal/:signalId', (req, res) => {
+app.delete('/api/telemetry/tool/:toolId/signal/:signalId', requireApiKey, (req, res) => {
   try {
     const deleteStmt = db.prepare(`
       DELETE FROM telemetry_events
