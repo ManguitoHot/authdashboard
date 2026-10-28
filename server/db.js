@@ -24,6 +24,16 @@ function initSchema() {
     );
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_telemetry_events_tool_id ON telemetry_events(tool_id);`);
+  // Portafolio del dashboard (proyectos, herramientas y bitácora) como un único
+  // documento JSON. Antes vivía en el localStorage de cada navegador, que está
+  // atado al dominio: al cambiar de URL se "perdía".
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS portfolio_state (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      data TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
 }
 
 // Se corre acá, al cargar el módulo, para garantizar que la tabla ya existe

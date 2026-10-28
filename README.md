@@ -67,9 +67,11 @@ El dashboard incluye un backend **Node + Express + SQLite** (`server/`) que reci
 | `GET` | `/api/telemetry/events?limit=&tool_id=` | — | Eventos crudos (uno por fila) |
 | `GET` | `/api/telemetry/export.csv` | — | Descargar todos los eventos en CSV |
 | `GET` | `/api/telemetry/export/db` | — | Descargar el archivo SQLite completo |
+| `GET` | `/api/portfolio` | — | Portafolio (proyectos, herramientas y bitácora) |
+| `PUT` | `/api/portfolio` | ✅ | Reemplazar el portafolio completo |
 | `GET` | `/api/health` | — | Estado del servicio |
 
-> 🔐 La key es la variable de entorno `TELEMETRY_API_KEY` del servidor. Al eliminar una señal desde el dashboard se pide una vez y queda guardada en ese navegador. Si el servidor no tiene `TELEMETRY_API_KEY` configurada, las escrituras quedan abiertas (solo para pruebas locales). Las lecturas (`GET`) son públicas.
+> 🔐 La key es la variable de entorno `TELEMETRY_API_KEY` del servidor. Al eliminar una señal o guardar cambios del portafolio desde el dashboard se pide una vez y queda guardada en ese navegador. Si el servidor no tiene `TELEMETRY_API_KEY` configurada, las escrituras quedan abiertas (solo para pruebas locales). Las lecturas (`GET`) son públicas.
 
 ---
 
@@ -105,7 +107,7 @@ Ver [`DEPLOY.md`](DEPLOY.md). Variables en [`.env.example`](.env.example).
 - `Telemetría de la Herramienta`: Ver señales, elegir la señal primaria, eliminar señales y copiar el snippet de integración (JS / Python / cURL).
 - `Filtros de Salud, Área y Adopción`: Segmenta al instante los proyectos por su nivel de cumplimiento.
 - `Búsqueda Global`: Filtra proyectos, herramientas o responsables en tiempo real.
-- `Persistencia`: Proyectos y herramientas se guardan en el `localStorage` del navegador; las señales de uso viven en el servidor (SQLite).
+- `Persistencia`: Proyectos, herramientas y señales de uso viven en el servidor (SQLite, tablas `portfolio_state` y `telemetry_events`). El `localStorage` del navegador es solo caché; si el servidor no tiene portafolio, el primer navegador que lo tenga en caché lo sube.
 
 ## 📁 Estructura
 ```text

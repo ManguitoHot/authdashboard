@@ -11,10 +11,51 @@ const INITIAL_DATA = {
   events: []
 };
 
+// Limpieza de datos: Asegurar que ninguna herramienta traiga señales por default
+// Elimina el "Botón descarga excel" que vino por default (0 clicks / sin interacción)
+// Devuelve true si cambió algo.
+function removeDefaultSignals(data) {
+  if (!data || !Array.isArray(data.tools)) return false;
+  let changed = false;
+  data.tools.forEach(tool => {
+    if (tool.signals && Array.isArray(tool.signals)) {
+      const initialCount = tool.signals.length;
+      tool.signals = tool.signals.filter(s => {
+        const isDefaultSignal =
+          (s.id === "btn_descarga_excel" ||
+           s.id === "boton-descarga-excel" ||
+           (s.label && s.label.trim().toLowerCase() === "botón descarga excel") ||
+           (s.label && s.label.trim().toLowerCase() === "boton descarga excel")) &&
+          (s.clicks === 0 || s.lastTriggered === "Sin señales aún" || !s.uniqueUsers || s.uniqueUsers.length === 0);
+        return !isDefaultSignal;
+      });
+      if (tool.signals.length !== initialCount) {
+        changed = true;
+        // Si la señal eliminada era la principal, reasignar a la primera señal real disponible
+        if (tool.signals.length > 0) {
+          const exists = tool.signals.some(s => s.id === tool.primarySignalId);
+          if (!exists) {
+            tool.primarySignalId = tool.signals[0].id;
+          }
+        } else {
+          tool.primarySignalId = null;
+        }
+      }
+    }
+  });
+  return changed;
+}
+
+const PORTFOLIO_API = "/api/portfolio";
+
 // Storage Controller
+// El portafolio vive en el servidor (SQLite, /api/portfolio). localStorage queda
+// como caché para pintar al instante y para seguir funcionando sin backend.
 class Store {
   constructor() {
     this.storageKey = "sunset_glass_project_control_db_v3";
+    this.pushTimer = null;
+    this.remoteWriteDeclined = false; // el usuario canceló el pedido de API Key en esta sesión
     try {
       localStorage.removeItem("sunset_glass_project_control_db_v1");
       localStorage.removeItem("sunset_glass_project_control_db_v2");
@@ -23,57 +64,95 @@ class Store {
   }
 
   load() {
-    const raw = localStorage.getItem(this.storageKey);
+    let raw = null;
+    try { raw = localStorage.getItem(this.storageKey); } catch (e) {}
     if (!raw) {
-      this.save(INITIAL_DATA);
       return JSON.parse(JSON.stringify(INITIAL_DATA));
     }
     try {
       const data = JSON.parse(raw);
-      // Limpieza de datos: Asegurar que ninguna herramienta traiga señales por default
-      // Elimina el "Botón descarga excel" que vino por default (0 clicks / sin interacción)
-      if (data && Array.isArray(data.tools)) {
-        let changed = false;
-        data.tools.forEach(tool => {
-          if (tool.signals && Array.isArray(tool.signals)) {
-            const initialCount = tool.signals.length;
-            tool.signals = tool.signals.filter(s => {
-              const isDefaultSignal =
-                (s.id === "btn_descarga_excel" ||
-                 s.id === "boton-descarga-excel" ||
-                 (s.label && s.label.trim().toLowerCase() === "botón descarga excel") ||
-                 (s.label && s.label.trim().toLowerCase() === "boton descarga excel")) &&
-                (s.clicks === 0 || s.lastTriggered === "Sin señales aún" || !s.uniqueUsers || s.uniqueUsers.length === 0);
-              return !isDefaultSignal;
-            });
-            if (tool.signals.length !== initialCount) {
-              changed = true;
-              // Si la señal eliminada era la principal, reasignar a la primera señal real disponible
-              if (tool.signals.length > 0) {
-                const exists = tool.signals.some(s => s.id === tool.primarySignalId);
-                if (!exists) {
-                  tool.primarySignalId = tool.signals[0].id;
-                }
-              } else {
-                tool.primarySignalId = null;
-              }
-            }
-          }
-        });
-        if (changed) {
-          this.save(data);
-        }
+      if (removeDefaultSignals(data)) {
+        this.saveLocal(data);
       }
       return data;
     } catch (e) {
       console.error("Error loading localStorage, resetting to initial data", e);
-      this.save(INITIAL_DATA);
       return JSON.parse(JSON.stringify(INITIAL_DATA));
     }
   }
 
+  // Trae el portafolio del servidor. Devuelve true si reemplazó los datos locales
+  // (hay que volver a pintar). Si el servidor aún no tiene portafolio y este
+  // navegador sí, lo sube: así se migra solo lo que antes vivía en localStorage.
+  async loadFromServer() {
+    let payload;
+    try {
+      const res = await fetch(PORTFOLIO_API);
+      if (!res.ok) return false;
+      payload = await res.json();
+    } catch (err) {
+      console.warn("No se pudo leer el portafolio del servidor; se usa la copia local.", err);
+      return false;
+    }
+    if (!payload.data) {
+      if (this.getProjects().length > 0 || this.getTools().length > 0) {
+        this.pushToServer();
+      }
+      return false;
+    }
+    const data = payload.data;
+    if (!Array.isArray(data.events)) data.events = [];
+    removeDefaultSignals(data);
+    this.data = data;
+    this.saveLocal();
+    return true;
+  }
+
+  // Guarda un cambio del usuario: caché local + servidor.
   save(data = this.data) {
-    localStorage.setItem(this.storageKey, JSON.stringify(data));
+    this.saveLocal(data);
+    clearTimeout(this.pushTimer);
+    this.pushTimer = setTimeout(() => this.pushToServer(), 500);
+  }
+
+  // Solo caché local (p. ej. datos de telemetría que ya vienen del servidor).
+  saveLocal(data = this.data) {
+    try { localStorage.setItem(this.storageKey, JSON.stringify(data)); } catch (e) {}
+  }
+
+  async pushToServer() {
+    const body = JSON.stringify({ data: this.data });
+    let key = getAdminKey();
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      let res;
+      try {
+        res = await fetch(PORTFOLIO_API, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...(key ? { "X-API-KEY": key } : {}) },
+          body
+        });
+      } catch (err) {
+        console.warn("Sin conexión con el servidor: el cambio quedó solo en este navegador.", err);
+        return;
+      }
+      if (res.status !== 401) {
+        if (!res.ok) console.warn(`El servidor rechazó el portafolio (HTTP ${res.status}).`);
+        return;
+      }
+
+      if (this.remoteWriteDeclined) return;
+      setAdminKey("");
+      key = (prompt("Para guardar los cambios en el servidor ingresá la TELEMETRY_API_KEY:") || "").trim();
+      if (!key) {
+        this.remoteWriteDeclined = true;
+        alert("Sin API Key los cambios quedan solo en este navegador.");
+        return;
+      }
+      setAdminKey(key);
+    }
+
+    alert("La API Key no es válida. Los cambios quedaron solo en este navegador.");
   }
 
   reset() {
@@ -1068,7 +1147,8 @@ async function syncToolTelemetry(tool) {
     }
     tool.weeklyInvocations = tool.signals.reduce((sum, s) => sum + (s.clicks || 0), 0);
 
-    store.save();
+    // Estos números ya salen del servidor: no hace falta volver a subir el portafolio.
+    store.saveLocal();
   } catch (err) {
     console.warn(`No se pudo sincronizar telemetría real para "${tool.name}" (¿backend caído o sin internet?)`, err);
   }
@@ -1654,7 +1734,16 @@ document.addEventListener("DOMContentLoaded", () => {
   renderToolsMatrixView();
   renderActivityStream();
 
-  // Primer refresco con datos reales de telemetría, y luego cada 30s.
-  syncAllToolsTelemetry();
+  // Primero el portafolio del servidor (reemplaza la copia local), después la
+  // telemetría real; y la telemetría se refresca cada 30s.
+  store.loadFromServer().then(changed => {
+    if (changed) {
+      renderExecutiveKPIs();
+      renderProjectsView();
+      renderToolsMatrixView();
+      renderActivityStream();
+    }
+    syncAllToolsTelemetry();
+  });
   setInterval(syncAllToolsTelemetry, 30000);
 });

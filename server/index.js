@@ -6,7 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.TELEMETRY_API_KEY;
 
-app.use(express.json());
+app.use(express.json({ limit: '2mb' })); // el portafolio completo viaja en un solo PUT
 
 // El Wizard se abre como file:// en la máquina de cada persona (no hay un
 // solo origen conocido), así que las rutas /api quedan abiertas a cualquier
@@ -14,7 +14,7 @@ app.use(express.json());
 // modificar nada sensible.
 app.use('/api', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-KEY');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
@@ -168,6 +168,41 @@ app.get('/api/telemetry/export/db', (req, res) => {
     res.download(DB_PATH, `telemetry_${new Date().toISOString().slice(0, 10)}.db`);
   } catch (err) {
     console.error('Error exportando la base de datos', err);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+const selectPortfolio = db.prepare('SELECT data, updated_at FROM portfolio_state WHERE id = 1');
+const upsertPortfolio = db.prepare(`
+  INSERT INTO portfolio_state (id, data, updated_at) VALUES (1, ?, datetime('now'))
+  ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at
+`);
+
+// Portafolio (proyectos + herramientas + bitácora). Lectura pública, igual que
+// el resto de GETs, para que cualquiera que abra el dashboard lo vea.
+// data = null significa que el servidor todavía no tiene portafolio guardado.
+app.get('/api/portfolio', (req, res) => {
+  try {
+    const row = selectPortfolio.get();
+    res.json(row ? { data: JSON.parse(row.data), updated_at: row.updated_at } : { data: null, updated_at: null });
+  } catch (err) {
+    console.error('Error leyendo el portafolio', err);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// Reemplaza el portafolio completo. Requiere la API Key: sin ella cualquiera
+// con la URL podría vaciarlo.
+app.put('/api/portfolio', requireApiKey, (req, res) => {
+  const data = req.body && req.body.data;
+  if (!data || !Array.isArray(data.projects) || !Array.isArray(data.tools)) {
+    return res.status(400).json({ error: 'invalid_portfolio' });
+  }
+  try {
+    upsertPortfolio.run(JSON.stringify(data));
+    res.json({ ok: true, updated_at: selectPortfolio.get().updated_at });
+  } catch (err) {
+    console.error('Error guardando el portafolio', err);
     res.status(500).json({ error: 'internal_error' });
   }
 });
