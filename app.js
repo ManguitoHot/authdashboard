@@ -764,7 +764,7 @@ function switchView(viewName) {
   if (viewName === "tools") renderToolsMatrixView();
   if (viewName === "stream") renderActivityStream();
   if (viewName === "telemetry") renderTelemetryView();
-  if (viewName === "agents") renderAgentsView();
+  if (viewName === "agents") { renderAgentsView(); renderTokensUsage(); }
   if (window.networkView) viewName === "network" ? networkView.start() : networkView.stop();
 }
 
@@ -840,6 +840,97 @@ async function renderAgentsView() {
             <span class="agent-time">${timeAgo(agent.last_action_at)}</span>
             <span class="agent-source-tag">${agent.source || "—"}</span>
           </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// ---------- Tile "Consumo de Tokens" (snapshot cacheado, subido cada 2 min
+// por un recolector externo puro — el servidor y el frontend no calculan
+// nada, solo muestran lo que vino en GET /api/tokens/usage) ----------
+
+function fmtTokens(n) {
+  if (typeof n !== "number" || isNaN(n)) return "—";
+  return n.toLocaleString("es-AR");
+}
+
+function fmtUsd(n) {
+  if (typeof n !== "number" || isNaN(n)) return "$0.00";
+  return `$${n.toFixed(2)}`;
+}
+
+async function renderTokensUsage() {
+  const breakdownGrid = document.getElementById("tokensBreakdownGrid");
+  const updatedAtEl = document.getElementById("tokensUpdatedAt");
+  if (!breakdownGrid) return;
+
+  let payload;
+  try {
+    const res = await fetch("/api/tokens/usage");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    payload = await res.json();
+  } catch (err) {
+    console.error("Error cargando /api/tokens/usage", err);
+    breakdownGrid.innerHTML = `<div class="agents-empty-state">Sin datos de tokens aún. (No se pudo conectar con /api/tokens/usage)</div>`;
+    return;
+  }
+
+  const data = payload && payload.data;
+  if (!data) {
+    breakdownGrid.innerHTML = `<div class="agents-empty-state">Sin snapshots todavía. Corré scripts/collect-tokens.py para poblar el estado inicial.</div>`;
+    document.getElementById("tokensAnthropicTotal").textContent = "—";
+    document.getElementById("tokensAgyTotal").textContent = "—";
+    return;
+  }
+
+  document.getElementById("tokensAnthropicTotal").textContent = `${fmtTokens(data.anthropic?.total_tokens)} tok`;
+  document.getElementById("tokensAnthropicCost").textContent = fmtUsd(data.anthropic?.total_cost_usd || 0);
+  document.getElementById("tokensAgyTotal").textContent = `${fmtTokens(data.antigravity?.total_tokens)} tok`;
+  document.getElementById("tokensAgyCalls").textContent = `${fmtTokens(data.antigravity?.total_calls)} llamadas`;
+
+  if (updatedAtEl) {
+    updatedAtEl.textContent = payload.updated_at
+      ? `Último snapshot: ${timeAgo(payload.updated_at)} (recolector sin LLM, cron cada 2 min).`
+      : "Snapshot calculado por un recolector externo (cron cada 2 min, cero LLM en el ciclo).";
+  }
+
+  const anthropicByBot = Array.isArray(data.anthropic?.by_bot) ? data.anthropic.by_bot : [];
+  const agyByBot = Array.isArray(data.antigravity?.by_bot) ? data.antigravity.by_bot : [];
+  const botIds = Array.from(new Set([...anthropicByBot.map(b => b.bot), ...agyByBot.map(b => b.bot)]));
+
+  if (botIds.length === 0) {
+    breakdownGrid.innerHTML = `<div class="agents-empty-state">Snapshot sin desglose por bot todavía.</div>`;
+    return;
+  }
+
+  breakdownGrid.innerHTML = botIds.map(botId => {
+    const a = anthropicByBot.find(b => b.bot === botId) || {};
+    const g = agyByBot.find(b => b.bot === botId) || { calls: 0, total_tokens: 0, models: {} };
+    const accent = AGENT_ACCENTS[botId] || "var(--grad-sunset-primary)";
+
+    const anthropicModels = (a.models || []).map(m =>
+      `<div class="model-line"><span class="model-name">${m.model}</span> <span class="model-toks">${fmtTokens(m.tokens)} tok</span></div>`
+    ).join("") || '<div class="model-line muted">sin datos</div>';
+
+    const agyModels = Object.entries(g.models || {}).map(([model, toks]) =>
+      `<div class="model-line"><span class="model-name">${model}</span> <span class="model-toks">${fmtTokens(toks)} tok</span></div>`
+    ).join("") || '<div class="model-line muted">sin datos</div>';
+
+    return `
+      <div class="agent-card" style="--agent-accent: ${accent};">
+        <div class="agent-card__top">
+          <div class="agent-avatar">${agentInitials(botId)}</div>
+          <div class="agent-identity">
+            <div class="agent-name">${botId}</div>
+            <div class="agent-role">Anthropic: ${fmtTokens(a.total_tokens)} tok · Antigravity: ${fmtTokens(g.total_tokens)} tok (${fmtTokens(g.calls)} llamadas)</div>
+          </div>
+        </div>
+        <div class="agent-card__bottom">
+          <span class="label">Anthropic — modelos</span>
+          ${anthropicModels}
+          <span class="label" style="margin-top: 0.6rem; display: block;">Antigravity — modelos</span>
+          ${agyModels}
         </div>
       </div>
     `;

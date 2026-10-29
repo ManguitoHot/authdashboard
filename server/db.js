@@ -49,6 +49,20 @@ function initSchema() {
     );
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_status_last_action_at ON agent_status(last_action_at);`);
+
+  // Snapshots de consumo de tokens (Anthropic/Hermes + Antigravity), calculados
+  // por un recolector externo (script puro, sin LLM en el ciclo) que corre cada
+  // 2 min vía cron desde el host Windows y los sube con POST /api/tokens/snapshot.
+  // Guardamos el JSON completo tal cual lo calculó el recolector; el servidor
+  // solo cachea y sirve el último (y conserva un historial corto, podado abajo).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS token_usage_snapshot (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      payload TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_token_usage_snapshot_created_at ON token_usage_snapshot(created_at);`);
 }
 
 // Se corre acá, al cargar el módulo, para garantizar que la tabla ya existe

@@ -1958,3 +1958,41 @@ body {
   border: 1px dashed var(--glass-border-light);
   border-radius: var(--radius-lg);
 }
+
+/* ==========================================================================
+   TILE NUEVA: CONSUMO DE TOKENS
+   Reutiliza .kpi-card (resumen Anthropic/Antigravity) y .agent-card
+   (desglose por bot). Solo agrega el listado compacto de modelos.
+   ========================================================================== */
+.model-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  border-bottom: 1px solid var(--glass-border-light);
+}
+
+.model-line:last-child {
+  border-bottom: none;
+}
+
+.model-line.muted {
+  color: var(--text-muted);
+  justify-content: center;
+}
+
+.model-name {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-toks {
+  color: var(--text-primary);
+  font-weight: 600;
+  flex-shrink: 0;
+}

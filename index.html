@@ -471,6 +471,50 @@
       <div class="agents-grid" id="agentsGrid">
         <!-- Rendered dynamically by renderAgentsView() -->
       </div>
+
+      <!-- TILE NUEVA: Consumo de Tokens (snapshot subido cada 2 min por un
+           recolector externo sin LLM; servidor solo cachea/sirve) -->
+      <div class="view-section-header" style="margin-top: 2rem;">
+        <div>
+          <h2 class="view-section-title">
+            <svg style="width: 20px; height: 20px; color: var(--sunset-orange);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Consumo de Tokens
+          </h2>
+          <p class="view-section-subtitle" id="tokensUpdatedAt">
+            Snapshot calculado por un recolector externo (cron cada 2 min, cero LLM en el ciclo).
+          </p>
+        </div>
+        <button class="btn btn-sunset-secondary" style="padding: 0.45rem 0.9rem; font-size: 0.78rem;" onclick="renderTokensUsage()">
+          ↻ Actualizar
+        </button>
+      </div>
+
+      <section class="kpi-grid" style="margin-bottom: 1.25rem;">
+        <div class="kpi-card" style="--kpi-gradient: var(--grad-sunset-primary);">
+          <div class="kpi-header">
+            <span class="kpi-title">Anthropic (Hermes)</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="tokensAnthropicTotal">—</span>
+            <span class="kpi-meta" id="tokensAnthropicCost">sin datos</span>
+          </div>
+        </div>
+        <div class="kpi-card" style="--kpi-gradient: var(--grad-sunset-gold);">
+          <div class="kpi-header">
+            <span class="kpi-title">Antigravity (agy)</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="tokensAgyTotal">—</span>
+            <span class="kpi-meta" id="tokensAgyCalls">sin datos</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="agents-grid" id="tokensBreakdownGrid">
+        <!-- Rendered dynamically by renderTokensUsage() -->
+      </div>
     </section>
 
   </div>
