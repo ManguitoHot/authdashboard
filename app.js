@@ -764,7 +764,86 @@ function switchView(viewName) {
   if (viewName === "tools") renderToolsMatrixView();
   if (viewName === "stream") renderActivityStream();
   if (viewName === "telemetry") renderTelemetryView();
+  if (viewName === "agents") renderAgentsView();
   if (window.networkView) viewName === "network" ? networkView.start() : networkView.stop();
+}
+
+// ---------- Vista "Status Agéntico" (tarjetas por bot, 100% aditiva) ----------
+
+function timeAgo(isoString) {
+  if (!isoString) return "sin dato";
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  if (isNaN(diffMs)) return "sin dato";
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "hace instantes";
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.floor(hours / 24);
+  return `hace ${days} d`;
+}
+
+const AGENT_STATUS_LABEL = { live: "En vivo", idle: "Inactivo", offline: "Sin actividad" };
+const AGENT_ACCENTS = {
+  edith: "var(--grad-sunset-primary)",
+  merlin: "var(--grad-sunset-gold)",
+  hernan: "var(--grad-twilight-glow)",
+};
+
+function agentInitials(name) {
+  if (!name) return "??";
+  return name.trim().slice(0, 2).toUpperCase();
+}
+
+async function renderAgentsView() {
+  const grid = document.getElementById("agentsGrid");
+  if (!grid) return;
+  grid.innerHTML = `<div class="agents-empty-state">Cargando status agéntico…</div>`;
+
+  let agents = [];
+  try {
+    const res = await fetch("/api/agents/status");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    agents = await res.json();
+  } catch (err) {
+    console.error("Error cargando /api/agents/status", err);
+    grid.innerHTML = `<div class="agents-empty-state">Sin datos de agentes aún. (No se pudo conectar con /api/agents/status)</div>`;
+    return;
+  }
+
+  if (!Array.isArray(agents) || agents.length === 0) {
+    grid.innerHTML = `<div class="agents-empty-state">Sin datos de agentes aún. Corré scripts/sync-agents.js para poblar el estado inicial.</div>`;
+    return;
+  }
+
+  grid.innerHTML = agents.map(agent => {
+    const status = agent.status || "offline";
+    const accent = AGENT_ACCENTS[agent.agent_id] || "var(--grad-sunset-primary)";
+    const statusLabel = AGENT_STATUS_LABEL[status] || "Sin actividad";
+    return `
+      <div class="agent-card" style="--agent-accent: ${accent};">
+        <div class="agent-card__top">
+          <div class="agent-avatar">${agentInitials(agent.name)}</div>
+          <div class="agent-identity">
+            <div class="agent-name">
+              <span class="status-dot ${status}"></span>
+              ${agent.name || agent.agent_id}
+            </div>
+            <div class="agent-role">${agent.role || "Agente"}</div>
+          </div>
+          <span class="agent-status-pill ${status}">${statusLabel}</span>
+        </div>
+        <div class="agent-card__bottom">
+          <span class="label">Última acción</span>
+          <div class="agent-last-action">${agent.last_action || "Sin registro todavía."}</div>
+          <div class="agent-action-meta">
+            <span class="agent-time">${timeAgo(agent.last_action_at)}</span>
+            <span class="agent-source-tag">${agent.source || "—"}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 // ---------- Vista "Base de Datos de Señales" (eventos reales, sin agregar) ----------

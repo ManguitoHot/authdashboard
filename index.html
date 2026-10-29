@@ -116,6 +116,12 @@
             </svg>
             Base de Datos de Señales
           </button>
+          <button class="nav-tab" data-view="agents">
+            <svg style="width: 15px; height: 15px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Status Agéntico
+          </button>
         </div>
 
         <div class="search-input-wrapper">
@@ -440,6 +446,30 @@
             Todavía no llegó ningún evento real de esta herramienta.
           </p>
         </div>
+      </div>
+    </section>
+
+    <!-- VIEW NUEVA: Status Agéntico -->
+    <section id="view-agents" class="dashboard-view">
+      <div class="view-section-header">
+        <div>
+          <h2 class="view-section-title">
+            <svg style="width: 22px; height: 22px; color: var(--sunset-orange);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Status Agéntico
+          </h2>
+          <p class="view-section-subtitle">
+            Última acción reportada por cada bot — sincronizado desde bitácora.md y el heartbeat de cron de cada agente.
+          </p>
+        </div>
+        <button class="btn btn-sunset-secondary" style="padding: 0.45rem 0.9rem; font-size: 0.78rem;" onclick="renderAgentsView()">
+          ↻ Actualizar
+        </button>
+      </div>
+
+      <div class="agents-grid" id="agentsGrid">
+        <!-- Rendered dynamically by renderAgentsView() -->
       </div>
     </section>
 

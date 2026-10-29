@@ -34,6 +34,21 @@ function initSchema() {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+
+  // Estado de los agentes del equipo (Hernan, Merlin, Edith, etc.).
+  // Cada agente tiene un único registro que se sobre-escribe con cada heartbeat.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_status (
+      agent_id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      role TEXT,
+      last_action TEXT,
+      last_action_at TEXT,
+      source TEXT,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_status_last_action_at ON agent_status(last_action_at);`);
 }
 
 // Se corre acá, al cargar el módulo, para garantizar que la tabla ya existe

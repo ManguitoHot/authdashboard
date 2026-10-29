@@ -1768,3 +1768,193 @@ body {
   border-radius: 50%;
   margin-right: 0.35rem;
 }
+
+/* ==========================================================================
+   VISTA NUEVA: STATUS AGÉNTICO
+   Tarjetas apiladas por agente (caja superior identidad + caja inferior
+   última acción). 100% aditivo, reutiliza los tokens ya definidos arriba.
+   ========================================================================== */
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+  position: relative;
+  transition: var(--transition-smooth);
+}
+
+.agent-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--agent-accent, var(--grad-sunset-primary));
+  opacity: 0.95;
+}
+
+.agent-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--glass-border-sunset);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.agent-card__top {
+  padding: 1.5rem 1.4rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid var(--glass-border-light);
+}
+
+.agent-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  background: var(--agent-accent, var(--grad-sunset-primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  box-shadow: var(--glow-sunset-md);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.agent-avatar::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: var(--grad-border-glow);
+  z-index: -1;
+  opacity: 0.8;
+}
+
+.agent-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.agent-name {
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.agent-role {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+.status-dot.live { background: var(--status-optimal-text); color: var(--status-optimal-text); animation: livePulse 2s infinite; }
+.status-dot.idle { background: var(--status-warning-text); color: var(--status-warning-text); }
+.status-dot.offline { background: var(--status-danger-text); color: var(--status-danger-text); }
+
+.agent-status-pill {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radius-full);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.agent-status-pill.live { background: var(--status-optimal-bg); border: 1px solid var(--status-optimal-border); color: var(--status-optimal-text); }
+.agent-status-pill.idle { background: var(--status-warning-bg); border: 1px solid var(--status-warning-border); color: var(--status-warning-text); }
+.agent-status-pill.offline { background: var(--status-danger-bg); border: 1px solid var(--status-danger-border); color: var(--status-danger-text); }
+
+.agent-card__bottom {
+  padding: 1.2rem 1.4rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: var(--glass-bg-subtle);
+}
+
+.agent-card__bottom .label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-sunset-bright);
+}
+
+.agent-last-action {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.45;
+}
+
+.agent-action-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.1rem;
+}
+
+.agent-time {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.agent-source-tag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.5rem;
+  letter-spacing: 0.03em;
+}
+
+.agents-empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  background: var(--glass-bg-card);
+  border: 1px dashed var(--glass-border-light);
+  border-radius: var(--radius-lg);
+}

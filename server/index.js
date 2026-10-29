@@ -207,6 +207,9 @@ app.put('/api/portfolio', requireApiKey, (req, res) => {
   }
 });
 
+const { mountAgentRoutes } = require('./agents');
+mountAgentRoutes(app, db, requireApiKey);
+
 app.get('/api/health', (req, res) => res.json({ ok: true, db: DB_PATH }));
 
 // Sirve el dashboard (index.html/app.js/styles.css) desde el mismo servicio.
