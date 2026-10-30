@@ -25,6 +25,7 @@ app.use('/api', (req, res, next) => {
 // GET eran públicos; como el repo y el dashboard son accesibles por internet,
 // cualquiera podía bajarse la base. El dashboard pide la key una vez y la
 // guarda en el navegador (ver authFetch en app.js).
+// También requieren key: GET /api/agents/status y /api/tokens/usage.
 // Siguen públicos: GET /api/telemetry/tool/:toolId (señales de una herramienta) y /api/health.
 function requireApiKey(req, res, next) {
   if (!API_KEY) return next(); // sin TELEMETRY_API_KEY configurada -> abierto (solo para probar local)

@@ -48,8 +48,8 @@ function mountTokenRoutes(app, db, requireApiKey) {
     }
   });
 
-  // ── GET /api/tokens/usage  (público) ─────────────────────────────────
-  app.get('/api/tokens/usage', (req, res) => {
+  // ── GET /api/tokens/usage  (requiere API Key) ─────────────────────────────────
+  app.get('/api/tokens/usage', requireApiKey, (req, res) => {
     try {
       const row = selectLatest.get();
       if (!row) return res.json({ data: null, updated_at: null });

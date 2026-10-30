@@ -802,7 +802,7 @@ async function renderAgentsView() {
 
   let agents = [];
   try {
-    const res = await fetch("/api/agents/status");
+    const res = await authFetch("/api/agents/status");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     agents = await res.json();
   } catch (err) {
@@ -867,7 +867,7 @@ async function renderTokensUsage() {
 
   let payload;
   try {
-    const res = await fetch("/api/tokens/usage");
+    const res = await authFetch("/api/tokens/usage");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     payload = await res.json();
   } catch (err) {

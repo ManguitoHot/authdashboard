@@ -23,8 +23,8 @@ function mountAgentRoutes(app, db, requireApiKey) {
       updated_at      = datetime('now')
   `);
 
-  // ── GET /api/agents/status  (público) ────────────────────────────────
-  app.get('/api/agents/status', (req, res) => {
+  // ── GET /api/agents/status  (requiere API Key) ────────────────────────────────
+  app.get('/api/agents/status', requireApiKey, (req, res) => {
     try {
       const rows = selectAll.all();
       const now = Date.now();
