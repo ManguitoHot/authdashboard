@@ -19,7 +19,7 @@ Uso:
   python collect-tokens.py --days 1     # ventana de "hermes insights" (default 1)
 
 Env vars:
-  TOKENS_API_URL     - default http://localhost:3300/api/tokens/snapshot
+  TOKENS_API_URL     - default http://localhost:3000/api/tokens/snapshot
   TELEMETRY_API_KEY  - si está seteada, se envía como header X-API-KEY
 """
 import argparse
@@ -173,7 +173,7 @@ def main():
     parser.add_argument("--days", type=int, default=1, help="ventana para hermes insights (default 1)")
     parser.add_argument("--loop", action="store_true", help="corre cada 2 minutos en vez de una sola vez")
     parser.add_argument("--dry-run", action="store_true", help="imprime el snapshot, no hace POST")
-    parser.add_argument("--api-url", default=os.environ.get("TOKENS_API_URL", "http://localhost:3300/api/tokens/snapshot"))
+    parser.add_argument("--api-url", default=os.environ.get("TOKENS_API_URL", "http://localhost:3000/api/tokens/snapshot"))
     args = parser.parse_args()
 
     api_key = os.environ.get("TELEMETRY_API_KEY", "")

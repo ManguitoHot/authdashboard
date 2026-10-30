@@ -17,6 +17,7 @@
 const fs   = require('fs');
 const path = require('path');
 const http = require('http');
+const https = require('https');
 
 // ── Configuración ──────────────────────────────────────────────────────
 const BITACORA_PATH = process.env.BITACORA_PATH;
@@ -54,7 +55,8 @@ function parseBitacora(filePath) {
     const [, date, time, tipo, detalle] = m;
     const tipoLower   = tipo.toLowerCase();
     const fullAction   = `${tipo} · ${detalle}`;
-    const isoDatetime  = time ? `${date}T${time}:00Z` : `${date}T00:00:00Z`;
+    // La bitácora está en hora local de este host: sin "Z" se interpreta así.
+    const isoDatetime  = new Date(`${date}T${time || '00:00'}:00`).toISOString();
 
     for (const agent of AGENTS) {
       let matches = false;
@@ -116,10 +118,12 @@ function postAgent(payload) {
     };
     if (API_KEY) headers['X-API-KEY'] = API_KEY;
 
-    const req = http.request(
+    const transport = parsed.protocol === 'https:' ? https : http;
+
+    const req = transport.request(
       {
         hostname: parsed.hostname,
-        port:     parsed.port || 80,
+        port:     parsed.port || undefined, // sin puerto: 80 o 443 según el protocolo
         path:     parsed.pathname,
         method:   'POST',
         headers,

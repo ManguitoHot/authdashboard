@@ -53,7 +53,9 @@ function mountTokenRoutes(app, db, requireApiKey) {
     try {
       const row = selectLatest.get();
       if (!row) return res.json({ data: null, updated_at: null });
-      res.json({ data: JSON.parse(row.payload), updated_at: row.created_at });
+      // SQLite guarda UTC sin zona: sin la "Z" el navegador lo leería como hora local.
+      const updatedAt = row.created_at.replace(' ', 'T') + 'Z';
+      res.json({ data: JSON.parse(row.payload), updated_at: updatedAt });
     } catch (err) {
       console.error('Error leyendo snapshot de tokens', err);
       res.status(500).json({ error: 'internal_error' });
