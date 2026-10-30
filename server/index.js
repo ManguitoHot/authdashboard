@@ -20,10 +20,12 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Protege ESCRITURA (POST /signal y DELETE de señales) -> evita que
-// cualquiera infle o borre los contadores. Los GET (ver señales, eventos crudos, exportar CSV/DB) quedan
-// públicos a propósito, para que el propio dashboard los pueda mostrar sin
-// tener que llevar la key de escritura en el código del cliente.
+// Protege ESCRITURA (POST /signal, PUT /portfolio y DELETE de señales) y las
+// LECTURAS sensibles (eventos crudos, exportar CSV/DB y portafolio). Antes los
+// GET eran públicos; como el repo y el dashboard son accesibles por internet,
+// cualquiera podía bajarse la base. El dashboard pide la key una vez y la
+// guarda en el navegador (ver authFetch en app.js).
+// Siguen públicos: GET /api/telemetry/tool/:toolId (señales de una herramienta) y /api/health.
 function requireApiKey(req, res, next) {
   if (!API_KEY) return next(); // sin TELEMETRY_API_KEY configurada -> abierto (solo para probar local)
   if (req.header('X-API-KEY') !== API_KEY) {
@@ -122,7 +124,7 @@ const selectRawEventsByTool = db.prepare(`
 // el propio dashboard pueda mostrarlo sin tener que exponer la key de
 // escritura en el código del cliente. Uso: GET /api/telemetry/events?limit=100
 // o ?tool_id=wizard_curvas_starcom
-app.get('/api/telemetry/events', (req, res) => {
+app.get('/api/telemetry/events', requireApiKey, (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 100, 500);
   try {
     const rows = req.query.tool_id
@@ -142,7 +144,7 @@ function csvEscape(value) {
 
 // Exporta todos los eventos (o filtrados por herramienta) como CSV, listo
 // para abrir en Excel.
-app.get('/api/telemetry/export.csv', (req, res) => {
+app.get('/api/telemetry/export.csv', requireApiKey, (req, res) => {
   try {
     const rows = req.query.tool_id
       ? selectRawEventsByTool.all(req.query.tool_id, 100000)
@@ -162,7 +164,7 @@ app.get('/api/telemetry/export.csv', (req, res) => {
 });
 
 // Descarga el archivo SQLite completo, tal cual está en el servidor.
-app.get('/api/telemetry/export/db', (req, res) => {
+app.get('/api/telemetry/export/db', requireApiKey, (req, res) => {
   try {
     db.pragma('wal_checkpoint(FULL)'); // vuelca lo pendiente del WAL al .db antes de servirlo
     res.download(DB_PATH, `telemetry_${new Date().toISOString().slice(0, 10)}.db`);
@@ -181,7 +183,7 @@ const upsertPortfolio = db.prepare(`
 // Portafolio (proyectos + herramientas + bitácora). Lectura pública, igual que
 // el resto de GETs, para que cualquiera que abra el dashboard lo vea.
 // data = null significa que el servidor todavía no tiene portafolio guardado.
-app.get('/api/portfolio', (req, res) => {
+app.get('/api/portfolio', requireApiKey, (req, res) => {
   try {
     const row = selectPortfolio.get();
     res.json(row ? { data: JSON.parse(row.data), updated_at: row.updated_at } : { data: null, updated_at: null });
@@ -213,7 +215,7 @@ mountAgentRoutes(app, db, requireApiKey);
 const { mountTokenRoutes } = require('./tokens');
 mountTokenRoutes(app, db, requireApiKey);
 
-app.get('/api/health', (req, res) => res.json({ ok: true, db: DB_PATH }));
+app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 // Sirve el dashboard (index.html/app.js/styles.css) desde el mismo servicio.
 app.use(express.static(path.join(__dirname, '..')));

@@ -87,7 +87,7 @@ class Store {
   async loadFromServer() {
     let payload;
     try {
-      const res = await fetch(PORTFOLIO_API);
+      const res = await authFetch(PORTFOLIO_API);
       if (!res.ok) return false;
       payload = await res.json();
     } catch (err) {
@@ -957,7 +957,7 @@ async function refreshTelemetryEvents() {
     const url = new URL(`${TELEMETRY_API_BASE}/events`, window.location.origin);
     url.searchParams.set("limit", "200");
     if (toolId) url.searchParams.set("tool_id", toolId);
-    const res = await fetch(url);
+    const res = await authFetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const events = data.events || [];
@@ -988,11 +988,11 @@ function downloadTelemetryCsv() {
   const toolId = document.getElementById("telemetryToolFilter").value;
   const url = new URL(`${TELEMETRY_API_BASE}/export.csv`, window.location.origin);
   if (toolId) url.searchParams.set("tool_id", toolId);
-  window.location.href = url.toString();
+  downloadProtected(url.toString(), "telemetry.csv");
 }
 
 function downloadTelemetryDb() {
-  window.location.href = `${TELEMETRY_API_BASE}/export/db`;
+  downloadProtected(`${TELEMETRY_API_BASE}/export/db`, "telemetry.db");
 }
 
 // Project Detail Drawer
@@ -1449,6 +1449,45 @@ function setAdminKey(key) {
     if (key) localStorage.setItem(ADMIN_KEY_STORAGE, key);
     else localStorage.removeItem(ADMIN_KEY_STORAGE);
   } catch (e) { /* sin storage disponible */ }
+}
+
+// fetch para las lecturas protegidas (portafolio, eventos, exportar). Manda la
+// key guardada; si el servidor responde 401 la pide una vez y reintenta.
+// Si la persona la rechaza, devuelve la respuesta 401 sin insistir.
+let readKeyDeclined = false;
+async function authFetch(url, options = {}) {
+  let key = getAdminKey();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const headers = { ...(options.headers || {}), ...(key ? { "X-API-KEY": key } : {}) };
+    const res = await fetch(url, { ...options, headers });
+    if (res.status !== 401) return res;
+    if (readKeyDeclined) return res;
+    setAdminKey("");
+    key = (prompt("Para ver los datos del servidor ingresá la TELEMETRY_API_KEY:") || "").trim();
+    if (!key) { readKeyDeclined = true; return res; }
+    setAdminKey(key);
+  }
+  return fetch(url, options);
+}
+
+// Baja un archivo protegido (CSV/DB) con la key, ya que un enlace directo no puede mandar headers.
+async function downloadProtected(url, fallbackName) {
+  try {
+    const res = await authFetch(url);
+    if (!res.ok) { alert(res.status === 401 ? "Se necesita la API Key para exportar." : `No se pudo exportar (HTTP ${res.status}).`); return; }
+    const cd = res.headers.get("Content-Disposition") || "";
+    const m = /filename="?([^";]+)"?/i.exec(cd);
+    const blob = await res.blob();
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = m ? m[1] : fallbackName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  } catch (err) {
+    alert("No se pudo conectar con el servidor para exportar.");
+  }
 }
 
 // Devuelve true si la señal se borró en el servidor (o no hay backend: modo offline).
